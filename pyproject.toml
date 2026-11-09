@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memlite-py"
+version = "0.1.0"
+description = "Embeddable local memory engine (Python). Data-compatible with respire-memlite (Rust) and @rsrsai/memlite (TypeScript)."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "risense" }]
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["memory", "local-first", "bm25", "causal-tree", "embeddings"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Text Processing :: Indexing",
+]
+
+[project.urls]
+Repository = "https://github.com/risense-ai/memlite-py"
+
+[tool.setuptools.packages.find]
+include = ["memlite_py*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

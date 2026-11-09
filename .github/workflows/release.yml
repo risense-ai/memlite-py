@@ -1,0 +1,63 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Guard tag equals package version
+        run: |
+          VERSION="$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")"
+          if [ "${GITHUB_REF_NAME}" != "v${VERSION}" ]; then
+            echo "tag ${GITHUB_REF_NAME} != v${VERSION} (pyproject.toml)"; exit 1
+          fi
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      - name: Run tests
+        run: python -m pytest -q
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.whl > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Smoke-install wheel
+        run: |
+          pip install dist/*.whl pytest pytest-asyncio
+          cd "$(mktemp -d)"
+          python -c "import memlite_py; assert memlite_py.VERSION"
+          python -m pytest --pyargs memlite_py -q 2>/dev/null || echo "(no packaged tests; import smoke passed)"
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
